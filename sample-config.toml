@@ -1,0 +1,13 @@
+# NOTE: Rename this file to config.toml and fill in the values
+
+# Any directories you want to search for files to create embeddings
+DIRS = [
+    "/Users/me/Vaults/Main/Daily",
+    "/Users/me/Vaults/Main/Pages",
+]
+
+OPENAI_KEY = "sk-MYAPIKEY"
+
+EMBEDDINGS_DB = "data/embeddings.db"
+
+TOKEN_LIMIT = 8000
