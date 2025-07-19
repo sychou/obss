@@ -124,7 +124,7 @@ The project uses modern Python dependency management with `pyproject.toml`:
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.12+
 - OpenAI API key with access to embedding and chat models
 - Obsidian vault with markdown files
 
