@@ -6,6 +6,7 @@ import numpy as np
 from openai import OpenAI
 import os
 import pandas as pd
+from rank_bm25 import BM25Okapi
 import sqlite3
 import sys
 import tiktoken
@@ -22,7 +23,7 @@ def validate_api_key():
     print("🔑 Validating OpenAI API key...", end=" ", flush=True)
     try:
         # Make a minimal test request
-        test_response = client.embeddings.create(
+        client.embeddings.create(
             input="test",
             model="text-embedding-3-small"
         )
@@ -223,18 +224,85 @@ def build():
     print(f"✅ Database updated! Total entries: {len(df)}")
 
 
-def search(df, query):
-    # Search for similar content using cosine similarity
+def enhance_query(query):
+    """Enhance query using GPT for better search results"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # Use mini for cost efficiency
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are a query enhancement assistant. Expand the user's search query to include related terms, synonyms, and alternative phrasings that would help find relevant content in a knowledge base. Return only the enhanced query, no explanations."
+                },
+                {
+                    "role": "user", 
+                    "content": f"Enhance this search query for better results: {query}"
+                }
+            ],
+            temperature=0.3,
+            max_tokens=100
+        )
+        content = response.choices[0].message.content
+        enhanced = content.strip() if content else query
+        return enhanced if enhanced else query
+    except Exception as e:
+        print(f"⚠️ Query enhancement failed: {e}")
+        return query
+
+def hybrid_search(df, query, semantic_weight=0.7, bm25_weight=0.3, top_k=10, similarity_threshold=0.1):
+    """Combine semantic search with BM25 keyword search"""
     if df.empty:
         return pd.DataFrame()
-        
-    query_embedding = get_embedding(query)
-    df['similarity'] = df['embedding'].apply(lambda x: cosine_similarity(x, query_embedding))
-    results = (
-        df.sort_values("similarity", ascending=False)
-        .head(5)
-    )
+    
+    # Enhance the query first
+    enhanced_query = enhance_query(query)
+    if enhanced_query != query:
+        print(f"🔍 Enhanced query: '{enhanced_query}'")
+    
+    # Semantic search
+    query_embedding = get_embedding(enhanced_query)
+    semantic_scores = df['embedding'].apply(lambda x: cosine_similarity(x, query_embedding))
+    
+    # Prepare text corpus for BM25
+    corpus = []
+    for _, row in df.iterrows():
+        try:
+            with open(row['file'], 'r', encoding='utf-8') as file:
+                content = file.read()
+                # Simple tokenization for BM25
+                tokens = content.lower().split()
+                corpus.append(tokens)
+        except Exception:
+            corpus.append([])  # Empty document if can't read
+    
+    # BM25 search
+    if corpus:
+        bm25 = BM25Okapi(corpus)
+        query_tokens = enhanced_query.lower().split()
+        bm25_scores = bm25.get_scores(query_tokens)
+        # Normalize BM25 scores to 0-1 range
+        max_bm25 = max(bm25_scores.tolist()) if len(bm25_scores) > 0 and max(bm25_scores.tolist()) > 0 else 1
+        bm25_scores = [score / max_bm25 for score in bm25_scores]
+    else:
+        bm25_scores = [0] * len(df)
+    
+    # Combine scores
+    df = df.copy()
+    df['semantic_score'] = semantic_scores
+    df['bm25_score'] = bm25_scores
+    df['hybrid_score'] = (semantic_weight * df['semantic_score'] + 
+                         bm25_weight * df['bm25_score'])
+    df['similarity'] = df['hybrid_score']  # Keep compatibility
+    
+    # Filter by threshold and return top results
+    filtered_df = df[df['hybrid_score'] >= similarity_threshold]
+    results = filtered_df.sort_values("hybrid_score", ascending=False).head(top_k)
+    
     return results
+
+def search(df, query):
+    """Main search function - now uses hybrid search"""
+    return hybrid_search(df, query)
 
 def get_chat_response(query, search_results, chat_history=None):
     """Generate a helpful response using GPT-4o based on search results and chat history"""

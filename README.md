@@ -4,12 +4,13 @@ An AI-powered semantic search system for your Obsidian vault that combines OpenA
 
 ## Features
 
-- 🔍 **Semantic Search**: Find relevant content across your entire - Obsidian vault using OpenAI embeddings
-- 🤖 **AI-Powered Responses**: Get comprehensive answers powered by - GPT-4o based on your knowledge base
-- 💬 **Conversational Chat**: Follow-up questions with maintained - context across conversations
-- 📚 **Multi-file Context**: Searches across multiple files and - provides source references
-- ⚡ **Incremental Indexing**: Only processes new or modified files - to save time and API costs
-- 🎯 **Smart Chunking**: Handles large files by splitting them into - optimal token chunks
+- 🔍 **Hybrid Search**: Combines semantic embeddings with BM25 keyword matching for superior relevance
+- 🤖 **AI-Powered Responses**: Get comprehensive answers powered by GPT-4o based on your knowledge base
+- 💬 **Conversational Chat**: Follow-up questions with maintained context across conversations
+- 🔧 **Smart Query Enhancement**: Automatically expands queries with related terms and synonyms
+- 📚 **Multi-file Context**: Searches across multiple files and provides source references
+- ⚡ **Incremental Indexing**: Only processes new or modified files to save time and API costs
+- 🎯 **Smart Chunking**: Handles large files by splitting them into optimal token chunks
 - 🔄 **Session Management**: Start fresh conversations anytime with slash commands
 
 ## Installation
@@ -85,6 +86,7 @@ The system will:
 💬 You: What are the key principles of effective note-taking?
 
 ────────────────────────────────────────────────────────────────────────────────
+🔍 Enhanced query: 'note-taking principles strategies methods effective efficient techniques best practices'
 🔎 Searching your knowledge base...
 🤖 Generating response ⠠
 
@@ -102,10 +104,12 @@ Based on your notes, here are the key principles of effective note-taking:
    learning and identify knowledge gaps...
 ──────────────────────────────────────────────────────
 
-📚 Sources: 3 files consulted
-   1. Note-taking Methods.md (similarity: 0.892)
-   2. Learning Principles.md (similarity: 0.834)
-   3. Knowledge Management.md (similarity: 0.801)
+📚 Sources: 5 files consulted
+   1. Note-taking Methods.md (hybrid score: 0.912)
+   2. Learning Principles.md (hybrid score: 0.867)
+   3. Knowledge Management.md (hybrid score: 0.834)
+   4. Effective Study Techniques.md (hybrid score: 0.789)
+   5. Information Processing.md (hybrid score: 0.756)
 
 ────────────────────────────────────────────────────────────────────────────────
 💭 Conversation #1 • Type /new to reset chat
@@ -142,12 +146,13 @@ content. This helps identify areas that need further exploration...
 
 The project uses modern Python dependency management with `pyproject.toml`:
 
-- `openai`: OpenAI API client
-- `pandas`: Data manipulation
-- `numpy`: Numerical operations
-- `tiktoken`: Token counting and encoding
-- `alive-progress`: Progress bars
-- `python-dotenv`: Environment variable loading
+- `openai`: OpenAI API client for embeddings and chat
+- `pandas`: Data manipulation and storage
+- `numpy`: Numerical operations and vector similarity
+- `rank-bm25`: BM25 algorithm for keyword-based search
+- `tiktoken`: Token counting and text encoding
+- `alive-progress`: Progress bars for file processing
+- `python-dotenv`: Environment variable management
 
 ## How It Works
 
@@ -155,9 +160,11 @@ The project uses modern Python dependency management with `pyproject.toml`:
 2. **Change Detection**: Tracks file modification times to avoid reprocessing unchanged files
 3. **Text Chunking**: Splits large files into token-limited chunks for optimal embedding
 4. **Embedding Generation**: Creates vector embeddings using OpenAI's `text-embedding-3-small` model
-5. **Semantic Search**: Finds most similar content using cosine similarity
-6. **Conversational AI**: Uses GPT-4o with chat history to generate contextual responses
-7. **Context Management**: Maintains conversation history (last 6 exchanges) for follow-up questions
+5. **Query Enhancement**: Uses GPT-4o-mini to expand queries with related terms and synonyms
+6. **Hybrid Search**: Combines semantic similarity (70%) with BM25 keyword matching (30%)
+7. **Result Ranking**: Returns top 10 most relevant results with configurable similarity thresholds
+8. **Conversational AI**: Uses GPT-4o with chat history to generate contextual responses
+9. **Context Management**: Maintains conversation history (last 6 exchanges) for follow-up questions
 
 ## Requirements
 
