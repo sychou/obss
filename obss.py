@@ -236,8 +236,8 @@ def search(df, query):
     )
     return results
 
-def get_chat_response(query, search_results):
-    """Generate a helpful response using GPT-4o based on search results"""
+def get_chat_response(query, search_results, chat_history=None):
+    """Generate a helpful response using GPT-4o based on search results and chat history"""
     if search_results.empty:
         return "I couldn't find any relevant information in your knowledge base. Please try a different search term or add more content to your indexed directories."
     
@@ -262,8 +262,16 @@ def get_chat_response(query, search_results):
 
 Provide comprehensive, well-structured answers using the provided context. When referencing information, mention which source it comes from. If the context doesn't fully answer the question, clearly state what information is missing.
 
-Format your response in a clear, readable way with proper markdown formatting when helpful."""
+Maintain conversation continuity by referencing previous exchanges when relevant. Format your response in a clear, readable way with proper markdown formatting when helpful."""
     
+    # Build messages with chat history
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    # Add chat history if available
+    if chat_history:
+        messages.extend(chat_history)
+    
+    # Add current query with context
     user_prompt = f"""Question: {query}
 
 Relevant context from knowledge base:
@@ -271,13 +279,12 @@ Relevant context from knowledge base:
 
 Please provide a helpful answer based on this context."""
     
+    messages.append({"role": "user", "content": user_prompt})
+    
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
+            messages=messages,  # type: ignore
             temperature=0.7,
             max_tokens=1000
         )
@@ -285,9 +292,45 @@ Please provide a helpful answer based on this context."""
     except Exception as e:
         return f"Sorry, I encountered an error generating a response: {e}"
 
+def print_separator(char="═", length=80):
+    """Print a visual separator"""
+    print(char * length)
+
+def print_header(text, char="═"):
+    """Print a formatted header"""
+    print(f"\n{char * 3} {text} {char * 3}")
+
+def show_progress(message):
+    """Show progress indicator while processing"""
+    import time
+    import itertools
+    import threading
+    
+    spinner = itertools.cycle(['▘', '▝', '▗', '▖'])
+    stop_spinner = threading.Event()
+    
+    def spin():
+        while not stop_spinner.is_set():
+            print(f'\r{message} {next(spinner)}', end='', flush=True)
+            time.sleep(0.2)
+    
+    spinner_thread = threading.Thread(target=spin)
+    spinner_thread.daemon = True
+    spinner_thread.start()
+    
+    return stop_spinner
+
+def print_ai_response(content, conversation_count):
+    """Print AI response with clear formatting"""
+    print(f"\n🤖 AI Response #{conversation_count}:")
+    print("─" * 50)
+    print(content)
+    print("─" * 50)
+
 def main():
-    print("🤖 Obsidian Semantic Search System")
-    print("=" * 35)
+    print_separator()
+    print("🤖 OBSIDIAN SEMANTIC SEARCH SYSTEM")
+    print_separator()
     
     # Validate API key before proceeding
     if not validate_api_key():
@@ -298,33 +341,65 @@ def main():
     print("\n🔄 Loading search index...")
     df = load_df()
     print(f"📚 Ready! Loaded {len(df)} indexed chunks")
-    print("\n🎯 Ask me anything about your knowledge base!")
+    
+    print_header("CHAT INTERFACE")
+    print("🎯 Ask me anything about your knowledge base!")
     print("💡 Tips: Be specific in your questions for better results")
-    print("⌨️  Commands: /exit to quit\n")
+    print("⌨️  Commands: /exit to quit • /new to start fresh conversation\n")
+    
+    # Initialize chat history
+    chat_history = []
+    conversation_count = 0
     
     while True:
-        user_input = input("💬 Ask me: ")
+        user_input = input("💬 You: ").strip()
         
         if user_input.lower() in ['/exit', '/quit', '/q']:
+            print_separator("─")
             print("👋 Goodbye!")
             sys.exit()
             
-        print(f"\n🔎 Searching your knowledge base...")
+        if user_input.lower() in ['/new', '/reset']:
+            chat_history = []
+            conversation_count = 0
+            print_separator("─")
+            print("🆕 Started new conversation")
+            print_separator("─")
+            continue
+            
+        if not user_input:
+            continue
+            
+        conversation_count += 1
+        
+        print_separator("─")
+        print(f"🔎 Searching your knowledge base...")
         search_results = search(df, user_input)
         
-        print("🤖 Generating response...\n")
-        ai_response = get_chat_response(user_input, search_results)
+        # Show progress while generating response
+        progress_stop = show_progress("🤖 Generating response")
+        ai_response = get_chat_response(user_input, search_results, chat_history)
+        progress_stop.set()
+        print('\r' + ' ' * 50 + '\r', end='')  # Clear progress line
         
-        print("📝 **Response:**")
-        print(ai_response)
+        print_ai_response(ai_response, conversation_count)
         
         if not search_results.empty:
-            print(f"\n📚 **Sources consulted:** {len(search_results)} files")
+            print(f"\n📚 Sources: {len(search_results)} files consulted")
             for i, (_, row) in enumerate(search_results.iterrows(), 1):
                 filename = os.path.basename(row['file'])
                 print(f"   {i}. {filename} (similarity: {row['similarity']:.3f})")
         
-        print("\n" + "─" * 60)
+        # Add to chat history (keep last 6 exchanges to manage context)
+        chat_history.append({"role": "user", "content": user_input})
+        chat_history.append({"role": "assistant", "content": ai_response})
+        
+        # Trim history to prevent context overflow
+        if len(chat_history) > 12:  # Keep last 6 user-assistant pairs
+            chat_history = chat_history[-12:]
+        
+        print_separator("─")
+        print(f"💭 Conversation #{conversation_count} • Type /new to reset chat\n")
 
 if __name__ == '__main__':
     main()

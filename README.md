@@ -6,10 +6,12 @@ An AI-powered semantic search system for your Obsidian vault that combines OpenA
 
 🔍 **Semantic Search**: Find relevant content across your entire Obsidian vault using OpenAI embeddings
 🤖 **AI-Powered Responses**: Get comprehensive answers powered by GPT-4o based on your knowledge base
+💬 **Conversational Chat**: Follow-up questions with maintained context across conversations
 📚 **Multi-file Context**: Searches across multiple files and provides source references
 ⚡ **Incremental Indexing**: Only processes new or modified files to save time and API costs
 🎯 **Smart Chunking**: Handles large files by splitting them into optimal token chunks
-✨ **User-Friendly Interface**: Clean prompts with helpful tips and slash commands
+✨ **Enhanced UI**: Visually distinct responses with borders, headers, and clear formatting
+🔄 **Session Management**: Start fresh conversations anytime with slash commands
 
 ## Installation
 
@@ -57,14 +59,17 @@ The system will:
 ### Interactive Commands
 
 - Ask any question about your knowledge base
+- Ask follow-up questions - the system maintains conversation context
+- Use `/new` or `/reset` to start a fresh conversation
 - Use `/exit`, `/quit`, or `/q` to quit
 - The AI will search your vault and provide contextual answers with source references
 
 ### Example Session
 
 ```
-🤖 Obsidian Semantic Search System
-===================================
+════════════════════════════════════════════════════════════════════════════════
+🤖 OBSIDIAN SEMANTIC SEARCH SYSTEM
+════════════════════════════════════════════════════════════════════════════════
 🔑 Validating OpenAI API key... ✅
 🔍 Scanning for markdown files...
 📊 Loading existing database...
@@ -73,24 +78,47 @@ The system will:
 🚀 Processing 12 files and generating embeddings...
 📚 Ready! Loaded 1,847 indexed chunks
 
+═══ CHAT INTERFACE ═══
 🎯 Ask me anything about your knowledge base!
 💡 Tips: Be specific in your questions for better results
-⌨️  Commands: /exit to quit
+⌨️  Commands: /exit to quit • /new to start fresh conversation
 
-💬 Ask me: What are the key principles of effective note-taking?
+💬 You: What are the key principles of effective note-taking?
 
+────────────────────────────────────────────────────────────────────────────────
 🔎 Searching your knowledge base...
 🤖 Generating response...
 
-📝 **Response:**
-Based on your notes, here are the key principles of effective note-taking:
+─── RESPONSE #1 ───
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Based on your notes, here are the key principles of effective note-taking: │
+│                                                                             │
+│ 1. **Active Processing**: Don't just copy information verbatim. Rephrase   │
+│    concepts in your own words to ensure understanding...                   │
+│                                                                             │
+│ 2. **Structure and Organization**: Use consistent formatting and hierarchy │
+│    to make notes scannable and retrievable...                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-1. **Active Processing**: Don't just copy information verbatim. Rephrase concepts in your own words to ensure understanding...
-
-📚 **Sources consulted:** 3 files
+📚 Sources: 3 files consulted
    1. Note-taking Methods.md (similarity: 0.892)
    2. Learning Principles.md (similarity: 0.834)
    3. Knowledge Management.md (similarity: 0.801)
+
+────────────────────────────────────────────────────────────────────────────────
+💭 Conversation #1 • Type /new to reset chat
+
+💬 You: Can you elaborate on the active processing part?
+
+────────────────────────────────────────────────────────────────────────────────
+🔎 Searching your knowledge base...
+🤖 Generating response...
+
+─── RESPONSE #2 ───
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Absolutely! Building on what I mentioned about active processing in your   │
+│ note-taking, here are the key aspects...                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Configuration
@@ -120,7 +148,8 @@ The project uses modern Python dependency management with `pyproject.toml`:
 3. **Text Chunking**: Splits large files into token-limited chunks for optimal embedding
 4. **Embedding Generation**: Creates vector embeddings using OpenAI's `text-embedding-3-small` model
 5. **Semantic Search**: Finds most similar content using cosine similarity
-6. **AI Response**: Uses GPT-4o to generate comprehensive answers based on search results
+6. **Conversational AI**: Uses GPT-4o with chat history to generate contextual responses
+7. **Context Management**: Maintains conversation history (last 6 exchanges) for follow-up questions
 
 ## Requirements
 
