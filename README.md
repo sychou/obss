@@ -10,8 +10,7 @@ An AI-powered semantic search system for your Obsidian vault that combines OpenA
 - 📚 **Multi-file Context**: Searches across multiple files and - provides source references
 - ⚡ **Incremental Indexing**: Only processes new or modified files - to save time and API costs
 - 🎯 **Smart Chunking**: Handles large files by splitting them into - optimal token chunks
-- ✨ **Enhanced UI**: Visually distinct responses with borders, - headers, and clear formatting
-- 🔄 **Session Management**: Start fresh conversations anytime with - slash commands
+- 🔄 **Session Management**: Start fresh conversations anytime with slash commands
 
 ## Installation
 
