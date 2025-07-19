@@ -4,14 +4,14 @@ An AI-powered semantic search system for your Obsidian vault that combines OpenA
 
 ## Features
 
-🔍 **Semantic Search**: Find relevant content across your entire Obsidian vault using OpenAI embeddings
-🤖 **AI-Powered Responses**: Get comprehensive answers powered by GPT-4o based on your knowledge base
-💬 **Conversational Chat**: Follow-up questions with maintained context across conversations
-📚 **Multi-file Context**: Searches across multiple files and provides source references
-⚡ **Incremental Indexing**: Only processes new or modified files to save time and API costs
-🎯 **Smart Chunking**: Handles large files by splitting them into optimal token chunks
-✨ **Enhanced UI**: Visually distinct responses with borders, headers, and clear formatting
-🔄 **Session Management**: Start fresh conversations anytime with slash commands
+- 🔍 **Semantic Search**: Find relevant content across your entire - Obsidian vault using OpenAI embeddings
+- 🤖 **AI-Powered Responses**: Get comprehensive answers powered by - GPT-4o based on your knowledge base
+- 💬 **Conversational Chat**: Follow-up questions with maintained - context across conversations
+- 📚 **Multi-file Context**: Searches across multiple files and - provides source references
+- ⚡ **Incremental Indexing**: Only processes new or modified files - to save time and API costs
+- 🎯 **Smart Chunking**: Handles large files by splitting them into - optimal token chunks
+- ✨ **Enhanced UI**: Visually distinct responses with borders, - headers, and clear formatting
+- 🔄 **Session Management**: Start fresh conversations anytime with - slash commands
 
 ## Installation
 
@@ -87,18 +87,21 @@ The system will:
 
 ────────────────────────────────────────────────────────────────────────────────
 🔎 Searching your knowledge base...
-🤖 Generating response...
+🤖 Generating response ⠠
 
-─── RESPONSE #1 ───
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Based on your notes, here are the key principles of effective note-taking: │
-│                                                                             │
-│ 1. **Active Processing**: Don't just copy information verbatim. Rephrase   │
-│    concepts in your own words to ensure understanding...                   │
-│                                                                             │
-│ 2. **Structure and Organization**: Use consistent formatting and hierarchy │
-│    to make notes scannable and retrievable...                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+🤖 AI Response #1:
+──────────────────────────────────────────────────────
+Based on your notes, here are the key principles of effective note-taking:
+
+1. **Active Processing**: Don't just copy information verbatim. Rephrase 
+   concepts in your own words to ensure understanding...
+
+2. **Structure and Organization**: Use consistent formatting and hierarchy 
+   to make notes scannable and retrievable...
+
+3. **Regular Review**: Schedule periodic reviews of your notes to reinforce 
+   learning and identify knowledge gaps...
+──────────────────────────────────────────────────────
 
 📚 Sources: 3 files consulted
    1. Note-taking Methods.md (similarity: 0.892)
@@ -112,13 +115,19 @@ The system will:
 
 ────────────────────────────────────────────────────────────────────────────────
 🔎 Searching your knowledge base...
-🤖 Generating response...
+🤖 Generating response ⠂
 
-─── RESPONSE #2 ───
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Absolutely! Building on what I mentioned about active processing in your   │
-│ note-taking, here are the key aspects...                                   │
-└─────────────────────────────────────────────────────────────────────────────┘
+🤖 AI Response #2:
+──────────────────────────────────────────────────────
+Absolutely! Building on what I mentioned about active processing in your 
+note-taking, here are the key aspects:
+
+**Paraphrasing**: Instead of copying text directly, rewrite concepts using 
+your own vocabulary. This forces deeper engagement with the material...
+
+**Question Generation**: As you take notes, formulate questions about the 
+content. This helps identify areas that need further exploration...
+──────────────────────────────────────────────────────
 ```
 
 ## Configuration
