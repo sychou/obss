@@ -86,29 +86,35 @@ def load_df() -> pd.DataFrame:
     df['modified'] = df['modified'].astype('float64')
 
     # Remove files that have been deleted or modified
-    valid_mask = []
-    removed_files = []
+    stale_files = []
     
     with alive_bar(len(df), title='Checking files') as bar:
         for _, row in df.iterrows():
             if not os.path.exists(row['file']) or os.path.getmtime(row['file']) > row['modified']:
-                removed_files.append(row['file'])
-                valid_mask.append(False)
-            else:
-                valid_mask.append(True)
+                stale_files.append((row['file'], row['part']))
             bar()
     
-    if removed_files:
-        print(f"🗑️  Removing {len(removed_files)} stale entries")
-        with alive_bar(len(removed_files), title='Removing stale') as bar:
-            for file in removed_files:
-                filename = os.path.basename(file)
-                print(f"   - {filename}")
-                bar()
+    if stale_files:
+        print(f"🗑️  Removing {len(stale_files)} stale entries from database...")
+        conn = sqlite3.connect(EMBEDDINGS_DB)
+        try:
+            for file_path, part in stale_files:
+                conn.execute("DELETE FROM vault WHERE file = ? AND part = ?", (file_path, part))
+            conn.commit()
+            
+            # Reload the cleaned data
+            df = pd.read_sql('select * from vault', conn)
+            if not df.empty:
+                df['modified'] = df['modified'].astype('float64')
+        finally:
+            conn.close()
+            
+        unique_files = set(file_path for file_path, _ in stale_files)
+        for file_path in unique_files:
+            filename = os.path.basename(file_path)
+            print(f"   - {filename}")
     else:
         print("✅ No stale entries found")
-    
-    df = df[valid_mask].reset_index(drop=True)
 
     # Convert JSON strings back to numpy arrays
     if not df.empty:
@@ -128,6 +134,27 @@ def save_df(df) -> None:
     conn = sqlite3.connect(EMBEDDINGS_DB)
     try:
         df_copy.to_sql('vault', conn, if_exists='replace', index=False)
+    finally:
+        conn.close()
+
+def save_single_embedding(file_path, part, modified_time, embedding) -> None:
+    """Save a single embedding to database immediately"""
+    conn = sqlite3.connect(EMBEDDINGS_DB)
+    try:
+        # Check if the 'vault' table exists and init if needed
+        existing_tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='vault';").fetchall()
+        if not existing_tables:
+            init_db(conn)
+        
+        # Convert embedding to JSON string
+        embedding_json = json.dumps(embedding.tolist() if hasattr(embedding, 'tolist') else embedding)
+        
+        # Insert single row
+        conn.execute(
+            "INSERT INTO vault (file, part, modified, embedding) VALUES (?, ?, ?, ?)",
+            (file_path, part, str(modified_time), embedding_json)
+        )
+        conn.commit()
     finally:
         conn.close()
 
@@ -176,52 +203,63 @@ def build():
         print("✨ All files are already indexed!")
         return
 
-    file_chunks = []
-    file_parts = []
-    mod_timestamps = []
-    embeddings = []
-
-    print(f"🚀 Processing {len(files)} files and generating embeddings...")
-    with alive_bar(len(files), title='Processing files') as file_bar:
+    embeddings_count = 0
+    total_chunks = 0
+    
+    # First pass: count total chunks for progress bar
+    for f in files:
+        try:
+            with open(f, "r", encoding='utf-8') as file:
+                chunks = get_chunks(file.read())
+                total_chunks += len(chunks)
+        except Exception:
+            pass  # Skip files we can't read
+    
+    print(f"🚀 Processing {len(files)} files with {total_chunks} chunks (saving incrementally)...")
+    with alive_bar(total_chunks, title='Generating embeddings') as progress_bar:
         for f in files:
             filename = os.path.basename(f)
-            file_bar.text(f'Processing: {filename}')
             try:
                 with open(f, "r", encoding='utf-8') as file:
                     mtime = os.path.getmtime(f)
                     chunks = get_chunks(file.read())
                     
                     for j, chunk in enumerate(chunks):
-                        content = encoding.decode(chunk)
-                        if len(chunks) > 1:
-                            file_bar.text(f'Processing: {filename} - chunk {j+1}/{len(chunks)}')
-                        embeddings.append(get_embedding(content))
-                        file_chunks.append(f)
-                        file_parts.append(j)
-                        mod_timestamps.append(mtime)
+                        try:
+                            content = encoding.decode(chunk)
+                            progress_bar.text(f'Processing: {filename} - chunk {j+1}/{len(chunks)}')
+                            
+                            # Get embedding and save immediately
+                            embedding = get_embedding(content)
+                            save_single_embedding(f, j, mtime, embedding)
+                            embeddings_count += 1
+                            
+                        except Exception as e:
+                            print(f"❌ Error processing chunk {j+1} of {filename}: {e}")
+                        
+                        progress_bar()
+                        
             except Exception as e:
                 print(f"❌ Error processing {filename}: {e}")
-            file_bar()
+                # Try to count chunks for progress tracking
+                try:
+                    with open(f, "r", encoding='utf-8') as temp_file:
+                        temp_chunks = get_chunks(temp_file.read())
+                        for _ in range(len(temp_chunks)):
+                            progress_bar()
+                except Exception:
+                    # If we can't even read the file, just advance progress bar once
+                    progress_bar()
 
-    if not embeddings:
+    if embeddings_count == 0:
         print("⚠️  No embeddings generated")
         return
 
-    print(f"📋 Creating DataFrame with {len(embeddings)} embeddings...")
-    df = pd.DataFrame({
-        'file': file_chunks,
-        'part': file_parts,
-        'modified': mod_timestamps,
-        'embedding': embeddings,
-    })
-
-    if not existing_df.empty:
-        print("🔗 Merging with existing data...")
-        df = pd.concat([existing_df, df], ignore_index=True)
-
-    print("💾 Saving to database...")
-    save_df(df)
-    print(f"✅ Database updated! Total entries: {len(df)}")
+    print(f"✅ Successfully generated and saved {embeddings_count} embeddings!")
+    
+    # Reload and display final count
+    final_df = load_df()
+    print(f"📊 Total database entries: {len(final_df)}")
 
 
 def enhance_query(query):

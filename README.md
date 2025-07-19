@@ -10,6 +10,7 @@ An AI-powered semantic search system for your Obsidian vault that combines OpenA
 - 🔧 **Smart Query Enhancement**: Automatically expands queries with related terms and synonyms
 - 📚 **Multi-file Context**: Searches across multiple files and provides source references
 - ⚡ **Incremental Indexing**: Only processes new or modified files to save time and API costs
+- 🛡️ **Interruption-Safe Processing**: Embeddings saved immediately - resume anytime without losing progress
 - 🎯 **Smart Chunking**: Handles large files by splitting them into optimal token chunks
 - 🔄 **Session Management**: Start fresh conversations anytime with slash commands
 
@@ -159,7 +160,7 @@ The project uses modern Python dependency management with `pyproject.toml`:
 1. **File Discovery**: Recursively scans configured directories for `.md` files
 2. **Change Detection**: Tracks file modification times to avoid reprocessing unchanged files
 3. **Text Chunking**: Splits large files into token-limited chunks for optimal embedding
-4. **Embedding Generation**: Creates vector embeddings using OpenAI's `text-embedding-3-small` model
+4. **Embedding Generation**: Creates vector embeddings using OpenAI's `text-embedding-3-small` model with incremental database saves
 5. **Query Enhancement**: Uses GPT-4o-mini to expand queries with related terms and synonyms
 6. **Hybrid Search**: Combines semantic similarity (70%) with BM25 keyword matching (30%)
 7. **Result Ranking**: Returns top 10 most relevant results with configurable similarity thresholds
